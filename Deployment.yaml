@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cnl-wasm
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cnl-wasm
+  template:
+    metadata:
+      labels:
+        app: cnl-wasm
+    spec:
+      runtimeClassName: wasmedge
+      containers:
+        - name: wasmcnl
+          image: ttl.sh/wasmcnl:1d
+

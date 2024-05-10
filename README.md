@@ -1,1 +1,1 @@
-# wasm-k8s-workshop
+# Wasm-k8s-workshop
