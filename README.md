@@ -18,18 +18,23 @@ To complete the workshop, you'll need the following:
 - Docker with Wasm features enabled.
   - If you use `colima`, check my `colima` template in the `setup` folder
 - Rust with the `wasm32-wasi` target added (run `rustup target add wasm32-wasi` before)
+  - rustup 1.27.0
 - [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/) v0.22.0
 - [Wasmedge](https://wasmedge.org/docs/start/overview) version 0.13.5
 
+Note: if you want to use the rust app already provided go to step 2.3.
+
 ## 2. Build and test the app
 
-Create a new simple hello world rust app.
+2.1 Create a new simple hello world rust app.
 
 ```
 ➜ cargo new wasm-test
 ```
 
-Execute `cargo run` to make sure that your new rust app runs OK:
+
+
+2.2 Enter the new directory and execute `cargo run` to make sure that your new rust app runs OK:
 
 ```
 ➜ cargo run
@@ -39,7 +44,7 @@ Execute `cargo run` to make sure that your new rust app runs OK:
 Hello, world!
 ```
 
-Build the app as a Wasm Module using the `--target wasm32-wasi`:
+2.3 Build the app as a Wasm Module using the `--target wasm32-wasi`:
 
 ```
 ➜ cargo build --target wasm32-wasi --release
@@ -47,7 +52,7 @@ Build the app as a Wasm Module using the `--target wasm32-wasi`:
     Finished release [optimized] target(s) in 0.75s
 ```
 
-Run the new Wasm Module using WasmEdge runtime:
+2.4 Run the new Wasm Module using WasmEdge runtime:
 
 ```
 ➜ wasmedge target/wasm32-wasi/release/wasm-test.wasm
@@ -61,7 +66,7 @@ Let's now use Docker to understand how today's tool can also work together with 
 
 You should be in the `root` directory.
 
-If you have been following the workshop you can use the `Dockerfile` provided:
+3.1 If you have been following the workshop you can use the `Dockerfile` provided:
 
 ```
 FROM scratch
@@ -69,7 +74,7 @@ COPY target/wasm32-wasi/release/wasm-test.wasm /test.wasm
 ENTRYPOINT [ "/test.wasm" ]
 ```
 
-Run the following command to build the app into an OCI image. The last line will use an anonymous and temporary OCI registry called [ttl.sh](https://ttl.sh) (use it only for testing!):
+3.2 Run the following command to build the app into an OCI image. The last line will use an anonymous and temporary OCI registry called [ttl.sh](https://ttl.sh) (use it only for testing!):
 
 ```
 ➜ docker buildx build \
@@ -78,7 +83,7 @@ Run the following command to build the app into an OCI image. The last line will
   -t ttl.sh/wasmtest:1d .
 ```
 
-Verify the image was built:
+3.3 Verify the image was built:
 
 ```
 ➜ docker images
@@ -86,7 +91,7 @@ REPOSITORY                       TAG       IMAGE ID       CREATED          SIZE
 ttl.sh/wasmtest                  1d        de4b93827021   29 seconds ago   2.14MB
 ```
 
-Run it on your local Docker environment specifying a Wasm Runtime :
+3.4 Run it on your local Docker environment specifying a Wasm Runtime :
 
 ```
 ➜ docker run --rm \
@@ -100,7 +105,7 @@ It works! The app is now packaged as a container and ready to be pushed.
 
 ## 4. Push to ttl.sh
 
-Run the following command to push the image to [ttl.sh](https://ttl.sh). The image tag will say for how long will the image be saved in the registry.
+4.1 Run the following command to push the image to [ttl.sh](https://ttl.sh). The image tag will say for how long will the image be saved in the registry.
 
 ```
 docker push ttl.sh/wasmtest:1d
@@ -112,7 +117,7 @@ With the app built, containerized, and uploaded to a registry, it's time to buil
 
 Run the following command to create a Kubernetes cluster with one control plane node, two workers. Give a name to it if you want (in this case was `cnl`).
 
-Create the cluster and test it.
+5.1 Create the cluster and test it.
 
 ```
 ➜ kind create cluster --config setup/kind.yaml --name cnl
@@ -126,7 +131,7 @@ cnl-worker2         Ready    <none>          41h   v1.29.2
 
 ## 6. Configure Kubernetes for Wasm
 
-To add Wasm capabilities to our cluster we will need [Kwasm Operator](https://kwasm.sh/).
+6.1 To add Wasm capabilities to our cluster we will need [Kwasm Operator](https://kwasm.sh/).
 >"Kwasm is a Kubernetes Operator that adds WebAssembly support to your Kubernetes nodes. It does so by using a container image that contains binaries and configuration variables needed to run pure WebAssembly images."
 
 ```
@@ -138,7 +143,7 @@ helm install -n kwasm --create-namespace kwasm-operator kwasm/kwasm-operator
 kubectl annotate node --all kwasm.sh/kwasm-node=true
 ```
 
-Kwasm Operator will create jobs to add the wasm features to each node:
+6.2 Kwasm Operator will create jobs to add the wasm features to each node:
 
 ```
 ➜ kubectl get pods -n kwasm
@@ -151,7 +156,7 @@ kwasm-operator-69848c8c9c-mcsq9           1/1     Running     0          41h
 
 ## 7. Deploy Wasm app to Kubernetes
 
-Check for existing RuntimeClasses.
+7.1 Check for existing RuntimeClasses.
 
 ```
 ➜ kubectl get runtimeclass
@@ -159,7 +164,7 @@ NAME       HANDLER    AGE
 ```
 In this step, we will use wasmedge runtime. You can learn about it here: https://wasmedge.org/
 
-Run the following command to create a new RuntimeClass called `wasmedge` that calls the `wasmedge` handler or use the already provided file **RuntimeClass.yaml** inside de `k8s`folder.
+7.2 Run the following command to create a new RuntimeClass called `wasmedge` that calls the `wasmedge` handler or use the already provided file **RuntimeClass.yaml** inside de `k8s`folder.
 
 ```
 kubectl apply -f - <<EOF
@@ -171,7 +176,7 @@ handler: wasmedge
 EOF
 ```
 
-Check it installed correctly.
+7.3 Check it installed correctly.
 
 ```
 ➜ kubectl get runtimeclass
@@ -179,7 +184,7 @@ NAME      HANDLER   AGE
 wasmedge   wasmedge      1m
 ```
 
-Create a new file (or use the already provided inside `k8s` folder) called **Deployment.yaml** and copy in the following content:
+7.4 Create a new file (or use the already provided inside `k8s` folder) called **Deployment.yaml** and copy in the following content:
 
 ```
 apiVersion: apps/v1
@@ -202,10 +207,10 @@ spec:
           image: ttl.sh/wasmtest:1d
 ```
 
-Deploy it and check it with the following commands.
+7.5 Deploy it and check it with the following commands.
 
 ```
-➜ kubectl apply -f k8s/Deployment.yml
+➜ kubectl apply -f k8s/Deployment.yaml
 deployment.apps/test-wasm created
 
 ➜ kubectl get deploy
@@ -213,7 +218,7 @@ NAME        READY   UP-TO-DATE   AVAILABLE   AGE
 test-wasm   0/2     2            0           3m42s
 ```
 
-Check that the 2 replicas are all scheduled to the nodes with the Wasm runtimes.
+7.6 Check that the 2 replicas are all scheduled to the nodes with the Wasm runtimes.
 
 ```
 ➜ kubectl get pods
@@ -222,7 +227,7 @@ test-wasm-6b64d64647-djc2d   0/1     Completed          1 (4s ago)   53s
 test-wasm-6b64d64647-g22nm   0/1     Completed          1 (3s ago)   53s
 ```
 
-Check the logs:
+7.7 Check the logs:
 
 ```
 ➜ kubectl logs test-wasm-6b64d64647-djc2d
